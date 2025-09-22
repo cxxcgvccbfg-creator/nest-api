@@ -1,51 +1,53 @@
 import { Logger, NotFoundException } from "@nestjs/common";
-import {FilterQuery, Model,Types, UpdateQuery} from 'mongoose';
-import { AbstractDocumnet } from "./abstract.schema"; 
+import { FilterQuery, Model, Types, UpdateQuery } from "mongoose";
+import { AbstractDocument } from "./abstract.schema";
 
-export abstract class AbstractRepository<TDocumnet extends AbstractDocumnet>{
-    protected abstract readonly logger:Logger;
-    constructor(protected readonly model:Model<TDocumnet>){}
+export abstract class AbstractRepository<TDocument extends AbstractDocument> {
+    protected abstract readonly logger: Logger;
 
-    async creat(documnet :Omit<TDocumnet,'_id'>):Promise<TDocumnet>{
-        const createdDocument= new this.model({
-            ...documnet,
-            _id:new Types.ObjectId(),
-        })
-        return (await createdDocument.save()).toJSON() as unknown as TDocumnet;
+    constructor(protected readonly model: Model<TDocument>) {}
+
+    async create(document: Omit<TDocument, "_id">): Promise<TDocument> {
+        const createdDocument = new this.model({
+            ...document,
+            _id: new Types.ObjectId(),
+        });
+        return (await createdDocument.save()).toJSON() as unknown as TDocument;
     }
 
-    async findOne(filterQuery:FilterQuery<TDocumnet>):Promise<TDocumnet>{
-        const documnet = await this.model.findOne(filterQuery)
-        .lean<TDocumnet>(true);
-        if(!documnet){
-            this.logger.warn('Document was not found with filter Query',filterQuery)
-            throw new NotFoundException('Document Waw Not Found')
+    async findOne(filterQuery: FilterQuery<TDocument>): Promise<TDocument> {
+        const document = await this.model.findOne(filterQuery).lean<TDocument>(true);
+        if (!document) {
+            this.logger.warn("Document was not found with filter Query", filterQuery);
+            throw new NotFoundException("Document was not found");
         }
-        return documnet;
+        return document;
     }
+
     async findOneAndUpdate(
-        filterQuery:FilterQuery<TDocumnet>,
-        update:UpdateQuery<TDocumnet>,
-    ):Promis<TDocumnet>{
-        const documne= await this.model
-        .findOneAndUpdate(filterQuery,update,{
-            new:true
-        })
-        .lean<TDocumnet>(true);
+        filterQuery: FilterQuery<TDocument>,
+        update: UpdateQuery<TDocument>,
+    ): Promise<TDocument> {
+        const document = await this.model
+            .findOneAndUpdate(filterQuery, update, {
+                new: true,
+            })
+            .lean<TDocument>(true);
 
-        if(!documnet){
-            this.logger.warn('Document was not found with filter Query',filterQuery)
-            throw new NotFoundException('Document Waw Not Found')
+        if (!document) {
+            this.logger.warn("Document was not found with filter Query", filterQuery);
+            throw new NotFoundException("Document was not found");
         }
-        return documnet;
+        return document;
     }
-    async find(filterQuery:FilterQuery<TDocumnet>):Promis<TDocumnet[]>{
-        return this.model.find(filterQuery).lean(TDocument[])(true);
-    }
-    async findOneAndDelete(
-        filterQuery: FilterQuery<TDocumnet>,
 
-    ):Promis<TDocumnet>{
-        return this.model.findOneAndDelete(filterQuery).lean<TDocumnet>(true);
+    async find(filterQuery: FilterQuery<TDocument>): Promise<TDocument[]> {
+        return this.model.find(filterQuery).lean<TDocument[]>(true);
+    }
+
+    async findOneAndDelete(
+        filterQuery: FilterQuery<TDocument>,
+    ): Promise<TDocument |null > {
+        return this.model.findOneAndDelete(filterQuery).lean<TDocument>(true);
     }
 }
